@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRUD Veículo</title>
+</head>
+<body>
+<h1>Gestão de Veículos</h1>
+<form id="veiculoForm">
+    <input type="hidden" id="id">
+    Descrição: <input type="text" id="descricao" required><br><br>
+    Fabricante: <input type="text" id="fabricante" required><br><br>
+    Cor: <input type="text" id="cor" required><br><br>
+    Placa: <input type="text" id="placa" required><br><br>
+    <button type="submit">Salvar</button>
+</form>
+
+<h3>Lista de Veículos</h3>
+<ul id="veiculo-list"></ul>
+
+<script>
+    const apiUrl = 'http://localhost:8080/veiculo';
+
+    async function listarVeiculos() {
+        const response = await fetch(apiUrl);
+        const veiculos = await response.json();
+        const list = document.getElementById('veiculo-list');
+        list.innerHTML = '';
+        veiculos.forEach(v => {
+            const li = document.createElement('li');
+            li.textContent = `${v.id} - ${v.descricao} (${v.placa})`;
+            const edit = document.createElement('button');
+            edit.textContent = 'Editar';
+            edit.onclick = () => editarVeiculo(v);
+            li.appendChild(edit);
+            const del = document.createElement('button');
+            del.textContent = 'Excluir';
+            del.onclick = () => deletarVeiculo(v.id);
+            li.appendChild(del);
+            list.appendChild(li);
+        });
+    }
+
+    document.getElementById('veiculoForm').addEventListener('submit', async e => {
+        e.preventDefault();
+        const id = document.getElementById('id').value;
+        const v = {
+            descricao: document.getElementById('descricao').value,
+            fabricante: document.getElementById('fabricante').value,
+            cor: document.getElementById('cor').value,
+            placa: document.getElementById('placa').value
+        };
+        if (id) {
+            await fetch(`${apiUrl}/${id}`, {
+                method: 'PUT',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify(v)
+            });
+        } else {
+            await fetch(apiUrl, {
+                method: 'POST',
+                headers: {'Content-Type':'application/json'},
+                body: JSON.stringify(v)
+            });
+        }
+        listarVeiculos();
+        document.getElementById('veiculoForm').reset();
+    });
+
+    async function deletarVeiculo(id) {
+        await fetch(`${apiUrl}/${id}`, { method: 'DELETE' });
+        listarVeiculos();
+    }
+
+    function editarVeiculo(v) {
+        document.getElementById('id').value = v.id;
+        document.getElementById('descricao').value = v.descricao;
+        document.getElementById('fabricante').value = v.fabricante;
+        document.getElementById('cor').value = v.cor;
+        document.getElementById('placa').value = v.placa;
+    }
+
+    window.onload = listarVeiculos;
+</script>
+</body>
+</html>
